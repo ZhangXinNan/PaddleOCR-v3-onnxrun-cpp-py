@@ -2,17 +2,21 @@
 
 TextClassifier::TextClassifier()
 {
-	string model_path = "weights/ch_ppocr_mobile_v2.0_cls_train.onnx";
+	string model_path = "/Users/zhangxin/github/PaddleOCR-v3-onnxrun-cpp-py/cpp/weights/ch_ppocr_mobile_v2.0_cls_train.onnx";
 	std::wstring widestr = std::wstring(model_path.begin(), model_path.end());
 	//OrtStatus* status = OrtSessionOptionsAppendExecutionProvider_CUDA(sessionOptions, 0);
 	sessionOptions.SetGraphOptimizationLevel(ORT_ENABLE_BASIC);
-	ort_session = new Session(env, widestr.c_str(), sessionOptions);
+//	ort_session = new Session(env, widestr.c_str(), sessionOptions);
+	ort_session = new Session(env, model_path.c_str(), sessionOptions);
 	size_t numInputNodes = ort_session->GetInputCount();
 	size_t numOutputNodes = ort_session->GetOutputCount();
 	AllocatorWithDefaultOptions allocator;
 	for (int i = 0; i < numInputNodes; i++)
 	{
-		input_names.push_back(ort_session->GetInputName(i, allocator));
+//		input_names.push_back(ort_session->GetInputName(i, allocator));
+		auto name_alloc = ort_session->GetInputNameAllocated(i, allocator);
+		input_names.push_back(name_alloc.get());
+
 		Ort::TypeInfo input_type_info = ort_session->GetInputTypeInfo(i);
 		auto input_tensor_info = input_type_info.GetTensorTypeAndShapeInfo();
 		auto input_dims = input_tensor_info.GetShape();
@@ -20,7 +24,10 @@ TextClassifier::TextClassifier()
 	}
 	for (int i = 0; i < numOutputNodes; i++)
 	{
-		output_names.push_back(ort_session->GetOutputName(i, allocator));
+//		output_names.push_back(ort_session->GetOutputName(i, allocator));
+		auto name_alloc = ort_session->GetOutputNameAllocated(i, allocator);
+		output_names.push_back(name_alloc.get());
+
 		Ort::TypeInfo output_type_info = ort_session->GetOutputTypeInfo(i);
 		auto output_tensor_info = output_type_info.GetTensorTypeAndShapeInfo();
 		auto output_dims = output_tensor_info.GetShape();
@@ -80,8 +87,8 @@ int TextClassifier::predict(Mat cv_image)
 	auto allocator_info = MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
 	Value input_tensor_ = Value::CreateTensor<float>(allocator_info, input_image_.data(), input_image_.size(), input_shape_.data(), input_shape_.size());
 
-	// ¿ªÊ¼ÍÆÀí
-	vector<Value> ort_outputs = ort_session->Run(RunOptions{ nullptr }, &input_names[0], &input_tensor_, 1, output_names.data(), output_names.size());   // ¿ªÊ¼ÍÆÀí
+	// ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
+	vector<Value> ort_outputs = ort_session->Run(RunOptions{ nullptr }, &input_names[0], &input_tensor_, 1, output_names.data(), output_names.size());   // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
 	const float* pdata = ort_outputs[0].GetTensorMutableData<float>();
 	
 	int max_id = 0;

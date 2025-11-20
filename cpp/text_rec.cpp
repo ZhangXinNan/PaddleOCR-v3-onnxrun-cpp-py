@@ -2,17 +2,22 @@
 
 TextRecognizer::TextRecognizer()
 {
-	string model_path = "weights/ch_PP-OCRv3_rec_infer.onnx";
+	string model_path = "/Users/zhangxin/github/PaddleOCR-v3-onnxrun-cpp-py/cpp/weights/ch_PP-OCRv3_rec_infer.onnx";
 	std::wstring widestr = std::wstring(model_path.begin(), model_path.end());
 	//OrtStatus* status = OrtSessionOptionsAppendExecutionProvider_CUDA(sessionOptions, 0);
 	sessionOptions.SetGraphOptimizationLevel(ORT_ENABLE_BASIC);
-	ort_session = new Session(env, widestr.c_str(), sessionOptions);
+//	ort_session = new Session(env, widestr.c_str(), sessionOptions);
+	ort_session = new Session(env, model_path.c_str(), sessionOptions);
+
 	size_t numInputNodes = ort_session->GetInputCount();
 	size_t numOutputNodes = ort_session->GetOutputCount();
 	AllocatorWithDefaultOptions allocator;
 	for (int i = 0; i < numInputNodes; i++)
 	{
-		input_names.push_back(ort_session->GetInputName(i, allocator));
+//		input_names.push_back(ort_session->GetInputName(i, allocator));
+		auto name_alloc = ort_session->GetInputNameAllocated(i, allocator);
+		input_names.push_back(name_alloc.get());
+
 		Ort::TypeInfo input_type_info = ort_session->GetInputTypeInfo(i);
 		auto input_tensor_info = input_type_info.GetTensorTypeAndShapeInfo();
 		auto input_dims = input_tensor_info.GetShape();
@@ -20,7 +25,10 @@ TextRecognizer::TextRecognizer()
 	}
 	for (int i = 0; i < numOutputNodes; i++)
 	{
-		output_names.push_back(ort_session->GetOutputName(i, allocator));
+//		output_names.push_back(ort_session->GetOutputName(i, allocator));
+		auto name_alloc = ort_session->GetOutputNameAllocated(i, allocator);
+		output_names.push_back(name_alloc.get());
+
 		Ort::TypeInfo output_type_info = ort_session->GetOutputTypeInfo(i);
 		auto output_tensor_info = output_type_info.GetTensorTypeAndShapeInfo();
 		auto output_dims = output_tensor_info.GetShape();

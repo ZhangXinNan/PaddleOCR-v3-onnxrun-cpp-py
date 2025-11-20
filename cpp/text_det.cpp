@@ -7,21 +7,30 @@ TextDetector::TextDetector()
 	this->unclipRatio = 1.6;
 	this->maxCandidates = 1000;
 
-	string model_path = "weights/ch_PP-OCRv3_det_infer.onnx";
-	std::wstring widestr = std::wstring(model_path.begin(), model_path.end());
+	string model_path = "/Users/zhangxin/github/PaddleOCR-v3-onnxrun-cpp-py/cpp/weights/ch_PP-OCRv3_det_infer.onnx";
+//	std::wstring widestr = std::wstring(model_path.begin(), model_path.end());
 	//OrtStatus* status = OrtSessionOptionsAppendExecutionProvider_CUDA(sessionOptions, 0);  ////gpu
 	sessionOptions.SetGraphOptimizationLevel(ORT_ENABLE_BASIC);
-	net = new Session(env, widestr.c_str(), sessionOptions);
+    cout << "model_path: " << model_path << endl;
+    // macOS 下 ONNXRuntime 要求使用 UTF-8 char*，不支持 wchar_t
+//	net = new Session(env, widestr.c_str(), sessionOptions);
+	net = new Session(env, model_path.c_str(), sessionOptions);
+
 	size_t numInputNodes = net->GetInputCount();
 	size_t numOutputNodes = net->GetOutputCount();
 	AllocatorWithDefaultOptions allocator;
+	//	ONNX Runtime 1.14+ 删除了旧 API，必须改用 GetInputNameAllocated / GetOutputNameAllocated。
 	for (int i = 0; i < numInputNodes; i++)
 	{
-		input_names.push_back(net->GetInputName(i, allocator));
+//		input_names.push_back(net->GetInputName(i, allocator));
+		auto name_alloc = net->GetInputNameAllocated(i, allocator);
+		input_names.push_back(name_alloc.get());
 	}
 	for (int i = 0; i < numOutputNodes; i++)
 	{
-		output_names.push_back(net->GetOutputName(i, allocator));
+//		output_names.push_back(net->GetOutputName(i, allocator));
+		auto name_alloc = net->GetOutputNameAllocated(i, allocator);
+		output_names.push_back(name_alloc.get());
 	}
 }
 

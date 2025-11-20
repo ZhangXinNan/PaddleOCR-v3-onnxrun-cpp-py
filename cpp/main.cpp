@@ -21,12 +21,13 @@ int main()
 	TextClassifier angle_model;
 	TextRecognizer rec_model;
 
-	string imgpath = "images/1.jpg";
+	string imgpath = "/Users/zhangxin/github/PaddleOCR-v3-onnxrun-cpp-py/cpp/images/1.jpg";
 	Mat srcimg = imread(imgpath);
 	///cv::rotate(srcimg, srcimg, 1);
+	cout << "image: " << imgpath << ", img.shape:" << srcimg.rows << "," << srcimg.cols << endl;
 
 	vector< vector<Point2f> > results = detect_model.detect(srcimg);
-
+	cout << "size of boxes : " << results.size() << endl;
 	for (size_t i = 0; i < results.size(); i++)
 	{
 		Mat textimg = detect_model.get_rotate_crop_image(srcimg, results[i]);
