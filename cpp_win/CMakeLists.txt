@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 project(ocr_onnx)
 
 set(CMAKE_CXX_STANDARD 14)
-
 # --------------------------
 # ONNXRuntime 路径
 # --------------------------
@@ -12,7 +11,7 @@ set(ONNXRUNTIME_DIR D:\\tools\\onnxruntime-win-x64-1.23.2)
 # --------------------------
 # OpenCV
 # --------------------------
-set(OpenCV_DIR "D:\\tools\\opencv\\build\\x64\\vc16\\lib")
+set(OpenCV_DIR "D:\\tools\\opencv-4.9.0\\build\\x64\\vc16\\lib")
 find_package(OpenCV REQUIRED)
 
 # --------------------------

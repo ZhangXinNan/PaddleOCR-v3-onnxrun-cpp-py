@@ -8,7 +8,8 @@ TextDetector::TextDetector()
 	this->maxCandidates = 1000;
 
 	// string model_path = "/Users/zhangxin/github/PaddleOCR-v3-onnxrun-cpp-py/cpp/weights/ch_PP-OCRv3_det_infer.onnx";
-	string model_path = R"(D:\github\PaddleOCR-v3-onnxrun-cpp-py\cpp_win\weights\ch_PP-OCRv3_det_infer.onnx)";
+	// string model_path = R"(D:\github\PaddleOCR-v3-onnxrun-cpp-py\cpp_win\weights\ch_PP-OCRv3_det_infer.onnx)";
+	string model_path = R"(D:\github\PaddleOCR-v3-onnxrun-cpp-py\cpp_win\weights\ppocrv5_mobile_det_opset10.onnx)";
 	std::wstring widestr = std::wstring(model_path.begin(), model_path.end());
 	//OrtStatus* status = OrtSessionOptionsAppendExecutionProvider_CUDA(sessionOptions, 0);  ////gpu
 	sessionOptions.SetGraphOptimizationLevel(ORT_ENABLE_BASIC);
@@ -26,13 +27,21 @@ TextDetector::TextDetector()
 //		input_names.push_back(net->GetInputName(i, allocator));
 		auto name_alloc = net->GetInputNameAllocated(i, allocator);
 		input_names.push_back(name_alloc.get());
+		cout << "Model input name: " << i << ":" << name_alloc.get() << endl;
 	}
 	for (int i = 0; i < numOutputNodes; i++)
 	{
 //		output_names.push_back(net->GetOutputName(i, allocator));
 		auto name_alloc = net->GetOutputNameAllocated(i, allocator);
 		output_names.push_back(name_alloc.get());
+		cout << "Model output name: " << i << ":" << name_alloc.get() << endl;
 	}
+	// 2. 打印模型输入 shape
+	auto info = net->GetInputTypeInfo(0).GetTensorTypeAndShapeInfo();
+	auto shape = info.GetShape();
+	cout << "Model input shape: ";
+	for (auto x : shape) cout << x << " ";
+	cout << endl;
 }
 
 Mat TextDetector::preprocess(Mat srcimg)
@@ -63,6 +72,22 @@ Mat TextDetector::preprocess(Mat srcimg)
 	return dstimg;
 }
 
+Mat TextDetector::preprocess_fixed(Mat srcimg)
+{
+	Mat dstimg;
+	cvtColor(srcimg, dstimg, COLOR_BGR2RGB);
+	int h = srcimg.rows;
+	int w = srcimg.cols;
+	float scale_h = 1;
+	float scale_w = 1;
+	cv::Mat square = cv::Mat(max(h, w), max(h, w), CV_8UC3, cv::Scalar(0, 0, 0));
+	// 将原图拷贝到方形矩阵左上角
+	dstimg.copyTo(square(Rect(0, 0, dstimg.cols, dstimg.rows)));
+
+	resize(square, dstimg, Size(length_side, length_side), INTER_LINEAR);
+	return dstimg;
+}
+
 void TextDetector::normalize_(Mat img)
 {
 	//    img.convertTo(img, CV_32F);
@@ -86,14 +111,21 @@ vector< vector<Point2f> > TextDetector::detect(Mat& srcimg)
 {
 	int h = srcimg.rows;
 	int w = srcimg.cols;
-	Mat dstimg = this->preprocess(srcimg);
+	cout << "srcimg size: " << h << "x" << w << endl;
+	// Mat dstimg = this->preprocess(srcimg);
+	Mat dstimg = this->preprocess_fixed(srcimg);
+	cout << "dstimg size: " << dstimg.rows << "x" << dstimg.cols << endl;
 	this->normalize_(dstimg);
 	array<int64_t, 4> input_shape_{ 1, 3, dstimg.rows, dstimg.cols };
+	// 3. 打印你的输入大小（检查是否匹配）
+	cout << "input_image_.size() = " << input_image_.size() << endl;
+	cout << "expect = " << 1 * 3 * dstimg.rows * dstimg.cols << endl;
 	
 	auto allocator_info = MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
 	Value input_tensor_ = Value::CreateTensor<float>(allocator_info, input_image_.data(), input_image_.size(), input_shape_.data(), input_shape_.size());
-
+	cout << "before net->Run:" <<endl;
 	vector<Value> ort_outputs = net->Run(RunOptions{ nullptr }, &input_names[0], &input_tensor_, 1, output_names.data(), output_names.size());
+	cout << "after net->Run:" << endl;
 	const float* floatArray = ort_outputs[0].GetTensorMutableData<float>();
 	int outputCount = 1;
 	for(int i=0; i < ort_outputs.at(0).GetTensorTypeAndShapeInfo().GetShape().size(); i++)

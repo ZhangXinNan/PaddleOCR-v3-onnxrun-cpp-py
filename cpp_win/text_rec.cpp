@@ -3,7 +3,8 @@
 TextRecognizer::TextRecognizer()
 {
 	// string model_path = "/Users/zhangxin/github/PaddleOCR-v3-onnxrun-cpp-py/cpp/weights/ch_PP-OCRv3_rec_infer.onnx";
-	string model_path = R"(D:\github\PaddleOCR-v3-onnxrun-cpp-py\cpp_win\weights\ch_PP-OCRv3_rec_infer.onnx)";
+	// string model_path = R"(D:\github\PaddleOCR-v3-onnxrun-cpp-py\cpp_win\weights\ch_PP-OCRv3_rec_infer.onnx)";
+	string model_path = R"(D:\github\PaddleOCR-v3-onnxrun-cpp-py\cpp_win\weights\ppocrv5_mobile_rec_opset10.onnx)";
 	std::wstring widestr = std::wstring(model_path.begin(), model_path.end());
 	//OrtStatus* status = OrtSessionOptionsAppendExecutionProvider_CUDA(sessionOptions, 0);
 	sessionOptions.SetGraphOptimizationLevel(ORT_ENABLE_BASIC);

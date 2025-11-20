@@ -21,14 +21,16 @@ private:
 	float polygonThreshold;
 	float unclipRatio;
 	int maxCandidates;
-	const int longSideThresh = 3;//minBox ³¤±ßÃÅÏÞ
+	const int longSideThresh = 3;//minBox ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	const int short_size = 736;
+	const int length_side = 960;
 	const float meanValues[3] = { 0.485, 0.456, 0.406 };
 	const float normValues[3] = { 0.229, 0.224, 0.225 };
 	float contourScore(const Mat& binary, const vector<Point>& contour);
 	void unclip(const vector<Point2f>& inPoly, vector<Point2f> &outPoly);
 	vector< vector<Point2f> > order_points_clockwise(vector< vector<Point2f> > results);
 	Mat preprocess(Mat srcimg);
+	Mat preprocess_fixed(Mat srcimg);
 	vector<float> input_image_;
 	void normalize_(Mat img);
 
